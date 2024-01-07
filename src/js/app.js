@@ -61,10 +61,10 @@ addTicket.addEventListener('click', () => {
             <div class="control-element">
               <span class="created" name="created">${nowDate}</span>
               <span class="circle">
-                <img class="correct" src="../img/correct.png" alt="Редактирование" />
+                <img class="correct" src="./img/correct.png" alt="Редактирование" />
               </span>
               <span class="circle">
-                <img class="delete" src="../img/delete.png" alt="Удаление" />
+                <img class="delete" src="./img/delete.png" alt="Удаление" />
               </span>
             </div>
           </div>`,
