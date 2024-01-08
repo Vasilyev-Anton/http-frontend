@@ -17,6 +17,35 @@ const TICKET_FORM_BUTTONS = `
   </div>
 `;
 
+// Получение списка тикетов
+document.addEventListener('DOMContentLoaded', () => {
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', `${url}/allTickets`);
+  xhr.onload = () => {
+    if (xhr.status === 200) {
+      const tickets = JSON.parse(xhr.responseText);
+      tickets.forEach((ticket) => {
+        ticketPad.insertAdjacentHTML(
+          'beforeend',
+          `<div class="ticket" data-id ="${ticket.id}">
+            <div class="custom-checkbox ${ticket.status ? 'checked' : ''}"></div>
+            <span class="name" name="name" data-fulldescription ="${ticket.description}">${ticket.name}</span>
+            <div class="control-element">
+              <span class="created" name="created">${ticket.created}</span>
+              <span class="circle">
+                <img class="correct" src="./img/correct.png" alt="Редактирование" />
+              </span>
+              <span class="circle">
+                <img class="delete" src="./img/delete.png" alt="Удаление" />
+              </span>
+            </div>
+          </div>`,
+        );
+      });
+    }
+  };
+  xhr.send();
+});
 // Добавление тикета
 addTicket.addEventListener('click', () => {
   ticketPad.insertAdjacentHTML(
@@ -31,16 +60,14 @@ addTicket.addEventListener('click', () => {
   );
   cancel = document.querySelector('.cancel');
   submit = document.querySelector('.submit');
-  // Обработчик кнопки ОТМЕНА меню "ДОБАВИТЬ ТИКЕТ"
   cancel.addEventListener('click', () => {
     document.querySelector('.create-ticket').remove();
   });
-  // Обработчик кнопки ОК меню "ДОБАВИТЬ ТИКЕТ"
   submit.addEventListener('click', (e) => {
     e.preventDefault();
     const createTicketForm = document.querySelector('.create-ticket');
-    const shortDescription = document.querySelector('.descriptionName').value; // Короткое описание
-    const fullDescription = document.querySelector('.fullDescriptionName').value; // Полное описание
+    const shortDescription = document.querySelector('.descriptionName').value;
+    const fullDescription = document.querySelector('.fullDescriptionName').value;
     document.querySelector('.create-ticket').remove();
     const date = new Date();
     const nowDate = `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}`;
@@ -53,7 +80,6 @@ addTicket.addEventListener('click', () => {
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4) {
         ticketPad.insertAdjacentHTML(
-          // добавляем новый тикет со значениями
           'beforeend',
           `<div class="ticket" data-id ="${xhr.responseText}">
             <div class="custom-checkbox"></div>
@@ -71,20 +97,16 @@ addTicket.addEventListener('click', () => {
         );
       }
     };
-    xhr.open('POST', `${url}`);
+    xhr.open('POST', `${url}/newTicket`);
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     xhr.send(body);
   });
 });
-// обработчики событий при клике на тикет
 ticketPad.addEventListener('click', (e) => {
-  // обработка клика на кастомном чекбоксе
   if (e.target.classList.contains('custom-checkbox')) {
     e.target.classList.toggle('checked');
-    // Определяем, активен чекбокс или нет
     const isChecked = e.target.classList.contains('checked');
-    // код для обновления статуса тикета в зависимости от состояния чекбокса
-    const ticket = e.target.closest('.ticket'); // находим ближайший родительский элемент с классом .ticket
+    const ticket = e.target.closest('.ticket');
     const idTicket = ticket.dataset.id; // получаем его id
     const xhr = new XMLHttpRequest();
     const body = `id=${encodeURIComponent(idTicket)}&status=${encodeURIComponent(isChecked)}`;
@@ -112,20 +134,16 @@ ticketPad.addEventListener('click', (e) => {
         </div>
       </form>`,
     );
-    // Обработчик кнопки ОТМЕНА меню "УДАЛИТЬ ТИКЕТ"
     document.querySelector('.cancel').addEventListener('click', () => {
       document.querySelector('.delete-ticket').remove();
     });
-    // Обработчик кнопки ОК меню "УДАЛИТЬ ТИКЕТ"
     document.querySelector('.submit').addEventListener('click', (el) => {
-      // Проверяем и удаляем открытое описание тикета, если оно есть
       const fullDescriptionElement = document.querySelector('.fullDes');
       if (fullDescriptionElement) {
         fullDescriptionElement.remove();
       }
       el.preventDefault();
       const xhr = new XMLHttpRequest();
-      const body = `id=${encodeURIComponent(targetTicket.dataset.id)}`;
       xhr.onreadystatechange = () => {
         if (xhr.readyState !== 4) {
           return;
@@ -135,8 +153,8 @@ ticketPad.addEventListener('click', (e) => {
           document.querySelector('.delete-ticket').remove();
         }
       };
-      xhr.open('DELETE', `${url}/?${body}`);
-      xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+      const ticketId = encodeURIComponent(targetTicket.dataset.id);
+      xhr.open('DELETE', `${url}/tickets/${ticketId}`);
       xhr.send();
     });
   } else if (e.target.classList.contains('correct')) {
@@ -152,42 +170,28 @@ ticketPad.addEventListener('click', (e) => {
       </form>`,
     );
     const ticketCorrectValue = e.target.closest('.ticket');
-    // Значение поля Краткое содержание (при корректировке данных)
     document.querySelector('.descriptionName').value = ticketCorrectValue.querySelector('.name').textContent;
-    // Значение поля Полное содержание (при корректировке данных)
     document.querySelector('.fullDescriptionName').value = ticketCorrectValue.querySelector('.name').dataset.fulldescription;
-    const cancelCorrectDescription = document.querySelector(
-      '.cancel',
-    ); // кнопка Отмена
-    const submitCorrectDescription = document.querySelector(
-      '.submit',
-    ); // кнопка Ок
-    // Обработчик кнопки ОТМЕНА меню "ИЗМЕНИТЬ ТИКЕТ"
+    const cancelCorrectDescription = document.querySelector('.cancel');
+    const submitCorrectDescription = document.querySelector('.submit');
     cancelCorrectDescription.addEventListener('click', () => {
       document.querySelector('.create-ticket').remove();
     });
-    // Обработчик кнопки ОК - (отправить изменения) меню "ИЗМЕНИТЬ ТИКЕТ"
     submitCorrectDescription.addEventListener('click', () => {
-      // Значение поля Краткое содержание (при корректировке данных)
       ticketCorrectValue.querySelector('.name').textContent = document.querySelector('.descriptionName').value;
-      // Значение поля Полное содержание (при корректировке данных)
       ticketCorrectValue.querySelector('.name').dataset.fulldescription = document.querySelector('.fullDescriptionName').value;
       const xhr = new XMLHttpRequest();
-      const body = `id=${encodeURIComponent(
-        ticketCorrectValue.dataset.id,
-      )}&name=${encodeURIComponent(
-        document.querySelector('.descriptionName').value,
-      )}&description=${encodeURIComponent(
-        document.querySelector('.fullDescriptionName').value,
-      )}`;
       xhr.onreadystatechange = () => {
         if (xhr.readyState === 4) {
           document.querySelector('.create-ticket').remove();
         }
       };
-      xhr.open('PUT', `${url}/?${body}`);
-      xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-      xhr.send();
+      xhr.open('PUT', `${url}/updateTicket/${ticketCorrectValue.dataset.id}`);
+      xhr.setRequestHeader('Content-type', 'application/json');
+      xhr.send(JSON.stringify({
+        name: document.querySelector('.descriptionName').value,
+        description: document.querySelector('.fullDescriptionName').value,
+      }));
     });
   } else if (e.target.classList.contains('status')) {
     // Обработка чекбокс
@@ -216,7 +220,6 @@ ticketPad.addEventListener('click', (e) => {
     e.target.classList.contains('ticket')
     || e.target.classList.contains('name')
   ) {
-    // обработка клика на тикет
     if (
       e.target.classList.contains('ticket')
       || e.target.classList.contains('name')
@@ -231,12 +234,12 @@ ticketPad.addEventListener('click', (e) => {
                 <span class="fullDes_content">${ticketFullDescription}</span>
             </div>`,
           );
-          ticket.classList.add('no-bottom-border'); // Добавляем класс, когда открывается описание
+          ticket.classList.add('no-bottom-border');
         } else {
           ticketPad.querySelector('.fullDes').remove();
           const allTickets = ticketPad.querySelectorAll('.ticket');
           allTickets.forEach((tk) => tk.classList.remove('no-bottom-border'));
-          ticket.classList.remove('no-bottom-border'); // Убираем класс, когда описание закрывается
+          ticket.classList.remove('no-bottom-border');
         }
       }
     }
